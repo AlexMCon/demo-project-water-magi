@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "WaterMagician Downloader",
+  "version": "1.2.0",
+  "description": "Descarcă paginile capitolelor între două numere, cu skip pentru .5",
+  "content_scripts": [
+    { "matches": ["*://comix.to/*", "*://*.comix.to/*"], "js": ["page-codec.js"], "world": "MAIN", "run_at": "document_start" },
+    { "matches": ["<all_urls>"], "js": ["chapter-api.js", "content.js"], "run_at": "document_idle" }
+  ]
+}

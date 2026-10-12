@@ -1,0 +1,160 @@
+{
+  "status": "ok",
+  "result": {
+    "id": 10044831,
+    "mangaId": 38326,
+    "number": 2,
+    "volume": 1,
+    "name": "Chapter 2 - Volume 1 (DigitalMangaFan)",
+    "language": "en",
+    "isOfficial": true,
+    "votes": 10,
+    "createdAtFormatted": "4mos ago",
+    "groupId": 10687,
+    "group": {
+      "id": 10687,
+      "name": "VIZ Media"
+    },
+    "creator": null,
+    "url": "/title/emenr-tokyo-ghoulre/10044831-chapter-2",
+    "pages": {
+      "baseUrl": "",
+      "items": [
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AjS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AgS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AhS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AmS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AnS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AkS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AlS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4AqS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4ArS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EiS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EjS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EgS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EhS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EmS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EnS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EkS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4ElS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4EqS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4ErS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4IiS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4IjS5FIHyE"
+        },
+        {
+          "width": 1725,
+          "height": 2475,
+          "url": "https://80pd.media-processing-lab.site/fcf/bEqPbYfoKT0Gm1XlRi6foApMzqUVVuai3R0Vvq7I6y4IgS5FIHyE"
+        }
+      ]
+    },
+    "prev": {
+      "id": 10044830,
+      "number": 1,
+      "volume": 1,
+      "url": "/title/emenr-tokyo-ghoulre/10044830-chapter-1"
+    },
+    "next": {
+      "id": 10044833,
+      "number": 3,
+      "volume": 1,
+      "url": "/title/emenr-tokyo-ghoulre/10044833-chapter-3"
+    },
+    "prevAny": {
+      "id": 10044830,
+      "number": 1,
+      "volume": 1,
+      "url": "/title/emenr-tokyo-ghoulre/10044830-chapter-1"
+    },
+    "nextAny": {
+      "id": 2616250,
+      "number": 3,
+      "volume": 1,
+      "url": "/title/emenr-tokyo-ghoulre/2616250-chapter-3"
+    }
+  }
+}

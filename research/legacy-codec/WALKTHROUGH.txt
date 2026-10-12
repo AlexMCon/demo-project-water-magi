@@ -1,0 +1,203 @@
+REVERSE ENGINEERING stuff.json WITH THE SUPPLIED JAVASCRIPT
+
+Result
+======
+The payload was recovered successfully. It is 3,687 bytes of JSON containing
+status="ok" and a result object for Chapter 2, Volume 1 (DigitalMangaFan).
+The chapter ID is 10044831, mangaId is 38326, language is "en", and the group
+name is "VIZ Media". It includes 22 page records with image URLs and dimensions,
+plus previous/next chapter metadata. These are values reported by the payload;
+the image URLs and third-party claims were not checked against a live site.
+
+Files to start with
+===================
+stuff.decoded.json       Readable, indented version of the recovered JSON.
+stuff.decoded.raw.json   Exact recovered JSON text, preserving its serialization.
+decode-stuff.cjs         Readable decoder and encoder using Node built-ins only.
+verification.json       Input/output hashes and recorded validation results.
+
+Run again from PowerShell
+=========================
+Set-Location 'C:\Users\alexm\Downloads'
+node .\stuff-analysis\decode-stuff.cjs
+
+To specify input and output paths explicitly:
+node .\stuff-analysis\decode-stuff.cjs .\stuff.json .\stuff-analysis\recovered.json
+
+The command writes both indented JSON and a corresponding .raw.json file.
+It verifies that encoding the recovered text reproduces the supplied e value.
+The standalone decoder does not need the original JavaScript at runtime.
+Its embedded constants belong to this particular supplied JavaScript bundle.
+
+How the investigation worked
+===========================
+1. Inspect the wrapper and source structure.
+
+   stuff.json has a single property, "e", with 4,916 characters. The alphabet
+   and padding behavior identify it as unpadded base64url. Decoding that outer
+   representation gives 3,687 bytes starting with:
+
+   7e 4b 40 3c db be 51 5a dc 2d 8c 9e cd d1 7d 94
+
+   Those bytes are not readable JSON. Base64url is only the outer packaging.
+   More transformations have to be reversed.
+
+   The JavaScript is 166,867 bytes of minified code. Functions such as Lu and
+   Wu mainly call vmv_42a25d with a numeric function ID. That pattern indicates
+   a custom bytecode interpreter: application operations are stored as encoded
+   data and executed by a virtual machine, rather than ordinary visible JS.
+
+2. Recover the hidden function tables.
+
+   inspect.cjs parses the source with the Acorn parser bundled in this Node
+   installation. It selects the VM-loader initializer, then inserts an
+   inspection hook just before that initializer returns. The hook exposes the
+   already-present bytecode decoders ym and yl and the slot-mapping helper yB.
+
+   The loader checks properties of standard JavaScript built-ins and also
+   uses navigator.appCodeName. Supplying the normal browser value "Mozilla"
+   makes the embedded bytecode decode correctly. The recovered values are:
+
+     built-in-derived seed: 4113121721 (hex f52941b9)
+     environment component: f52941b9Mozilla
+     additional loader salt: 1b159ba3
+
+   These values unwrap the VM's hidden programs. They are separate from the
+   three byte transformations applied to stuff.json.
+
+   The extraction yielded 33 main programs and 185 nested programs. Constants
+   and instruction operands were recovered, including "x-enc", "data", "e",
+   "JSON", "parse", and the embedded lookup tables.
+
+3. Follow the response handler to the right decoder.
+
+   The export Lu installs request and response interceptors. Its main program
+   29 captures wu.B for the response handler, nested program 176. That handler
+   checks the x-enc header and the e property, calls the captured function,
+   and parses its returned string with JSON.parse.
+
+   The visible binding is wu.B = hu[3]. The hu initializer returns these four
+   functions, in this order:
+
+     hu[0] = _0x5585f3   Separate string encoder.
+     hu[1] = _0x5883e5   Corresponding separate string decoder.
+     hu[2] = _0xe79734   Encoder paired with the response decoder.
+     hu[3] = _0x13bb22   Decoder for this response payload.
+
+   A useful lesson: do not assume the first apparent encode/decode pair is the
+   right one. I initially tried hu[1]; its URI decoding failed. Checking the
+   actual function order and response-handler binding identified hu[3].
+
+   reference.cjs runs the VM and this codec initializer in a separate Node VM
+   context. Browser-related functions needed for the codec are implemented
+   inside that context. Node's filesystem/process/network APIs are not passed
+   into it. The selected prefix ends before the application's other initializers.
+   Timeouts bound each evaluation. A Node VM context is an isolation aid here,
+   not a general security boundary for arbitrary hostile code.
+
+   Instrumenting the VM entry point recorded this decoding chain:
+
+     _0x569a54: base64url text -> binary string
+     _0x476ece: binary string -> byte array
+     _0x44e662: reverse stage C
+     _0x38ccf0: reverse stage B
+     _0x3e82df: reverse stage A
+     _0x96f4d2: UTF-8 bytes -> text
+
+   The handler's JSON.parse then produces the recovered object. The decoder
+   function itself returns the complete JSON text, including status/result.
+
+4. Translate the transformations into readable code.
+
+   Each stage uses a table containing every byte value 0..255 exactly once,
+   a repeating key, and one initial feedback byte. I call the stages A, B, C
+   according to their encoding order. These labels are for this explanation.
+
+   Stage   Key length   Initial feedback   Nested decoder program
+   A       24 bytes     189                4  (_0x3e82df)
+   B       24 bytes     133                11 (_0x38ccf0)
+   C       32 bytes     32                 7  (_0x44e662)
+
+   Encoding is:
+
+     UTF-8 text -> stage A -> stage B -> stage C -> base64url
+
+   Decoding applies those steps in reverse order:
+
+     base64url -> reverse C -> reverse B -> reverse A -> UTF-8 -> JSON.parse
+
+   Let S be one stage's table, K its key, p[i] its input byte, and c[i] its
+   encoded byte. The forward operation is:
+
+     previous = initial feedback byte
+     c[i] = S[p[i] XOR K[i % keyLength] XOR previous]
+     previous = c[i]
+
+   Build the inverse table with inverse[S[x]] = x. Then the reverse is:
+
+     previous = initial feedback byte
+     p[i] = inverse[c[i]] XOR K[i % keyLength] XOR previous
+     previous = c[i]
+
+   XOR is its own inverse. The permutation is invertible because every table
+   value is unique. Save the current encoded byte for feedback, not the newly
+   decoded byte. Reset feedback to the stage's initial value at each stage.
+
+   The VM instruction stream confirmed these operations. For example, opcode
+   285 reads an array element, opcode 100 writes one, and opcode 181 performs
+   the arithmetic/bitwise operation selected by its operand. Its operands
+   12878, 12875, and 12872 resolve to XOR, remainder (%), and bitwise AND.
+
+   A concrete check with the first payload byte, in decimal:
+
+     Stage C: inverse[126] = 144; 144 XOR 200 XOR 32  = 120
+     Stage B: inverse[120] = 44;   44 XOR 217 XOR 133 = 112
+     Stage A: inverse[112] = 107; 107 XOR 173 XOR 189 = 123
+
+   Byte 123 is "{". The complete result begins with {"status":"ok","result":.
+   decode-stuff.cjs implements these exact operations and embeds the recovered
+   tables and keys. No brute-force password search was needed: the supplied
+   client code contained the inverse algorithm and all required constants.
+
+5. Verify against independent evidence.
+
+   Readable-looking output alone is not a sufficient check. verify.cjs compares
+   the readable reconstruction with the supplied codec running in the reference
+   harness. All of the following passed:
+
+   - Reconstructed plaintext matches the original decoder's text exactly.
+   - Each of the three intermediate byte arrays matches the original decoder.
+   - The original encoder reproduces the original e value exactly.
+   - The reconstructed encoder also reproduces that e value exactly.
+   - JSON parsing succeeds and the payload contains 22 page records.
+   - Sixteen differential samples pass both implementations, including empty
+     input, ASCII controls, Unicode text, and lengths around key boundaries.
+   - Both original input files remain unchanged during validation.
+
+   To repeat the comparison:
+   node .\stuff-analysis\verify.cjs
+
+   To repeat bytecode extraction with this Node installation:
+   node --expose-internals .\stuff-analysis\inspect.cjs
+
+   The extraction command uses a Node-internal Acorn path and may need adapting
+   on other Node versions. The standalone decoder uses only public built-ins.
+
+Additional evidence files
+=========================
+bytecode.json             Decoded VM programs, including their constants.
+codec.disassembly.txt     Selected decoded instructions and opcode handlers.
+codec-trace.json          Codec call arguments and intermediate results.
+secure.inspection.txt     A reading aid with long encoded literals abbreviated;
+                          it is not an executable or fully deobfuscated source.
+inspect.cjs              Repeatable loader/table extraction and disassembly.
+reference.cjs            Original codec execution and tracing harness.
+verify.cjs               Comparison against that original codec.
+
+The main learning point
+=======================
+AI assisted with reading the obfuscation, identifying the relevant functions,
+and translating their operations into a small program. The recovered output is
+supported by executable comparisons and an exact round trip, rather than a
+guess about what the JSON should contain. This result applies to this payload
+and the supplied bundle; a different bundle may contain different constants.
