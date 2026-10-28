@@ -33,7 +33,7 @@ async function snapshot(){
   context=await chromium.launchPersistentContext(path.join(work,'browser-profile'),{
     channel:'chromium',
     executablePath:process.env.WM_BROWSER_PATH||undefined,
-    headless:true,viewport:{width:1280,height:900},acceptDownloads:true,
+    headless:process.env.WM_HEADFUL!=='1',viewport:{width:1280,height:900},acceptDownloads:true,
     args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`],
   });
   page=context.pages()[0]||await context.newPage();

@@ -4,7 +4,7 @@
 
 Proiectul păstrează întregul flux construit împreună cu utilizatorul: analizarea răspunsului criptat, integrarea în extensia Chrome WaterMagician Downloader, testarea live a descărcării și conversia imaginilor în ebook.
 
-- Extensia este în `extension/`, versiunea curentă **1.2.0**.
+- Extensia este în `extension/`, versiunea curentă **1.2.1**.
 - Uneltele ebook sunt în **`convert-to-epub/`**. Acesta este numele cerut explicit de utilizator și trebuie păstrat.
 - Browserul controlat este în `automation/browser-agent.cjs`.
 - Analiza formatului vechi este în `research/legacy-codec/`.
@@ -86,3 +86,95 @@ Pentru analiza originalului sunt necesare fișierele locale originale, care nu s
 - Testele automate folosesc mockuri; dovezile live de mai sus sunt separate și datate.
 - Browser-agent-ul este un harness interactiv de testare, nu componenta necesară descărcării obișnuite. Extensia este downloader-ul normal.
 - Validatorul EPUB verifică arhiva, XML, referințele, spine-ul și imaginile; nu înlocuiește un test pe dispozitiv sau un validator complet de standard precum EPUBCheck.
+
+## Recuperare selectivă, 2026-10-19
+
+- `extension-repair/` este extensia separată WaterMagician Page Repair 1.0.0.
+  Planul `capitol: pagini`, intervalele și linkul sursei sunt editabile; `*`
+  recuperează un capitol întreg. Planul rămas se păstrează după fiecare pagină.
+- Pentru Aristocrat: Original 136–170 și K-Manga 171–184. Schimbarea sursei este
+  manuală. Group ID-ul API și seria sunt blocate pe durata fiecărui rulaj.
+- Auditul compară fișierele cu totalul API, inclusiv paginile lipsă de la final,
+  și decodează fișierele existente. Nu confunda integritatea cu verificarea
+  conținutului. Recuperarea păstrează implicit fișierele existente și verifică
+  imaginile noi înainte și după scriere. Nu face comasare.
+- `npm run build:repair` sincronizează codec-ul extensiei normale într-un canal
+  bridge separat; `npm test` include cele 7 teste noi (27 în total).
+  `npm run test:repair-browser` verifică offline auditul, recuperarea, progresul,
+  oprirea și blocarea schimbării sursei folosind File System API real.
+- Inventarul local Aristocrat a reconfirmat 38 de pagini lipsă în 16 capitole
+  și absența capitolului 183. Auditul live din Chromium întâlnește Cloudflare;
+  nu prezenta totalurile API ca verificate în lipsa unui raport complet.
+- `automation/audit-aristocrat.cjs` face numai audit de totaluri live în cele
+  două intervale, într-un profil separat; nu descarcă sau modifică imaginile.
+
+În 2026-10-20, numele afișat al extensiei separate a devenit `Nori 47`, cu
+descrierea neutră `Small everyday utilities.` la cererea utilizatorului.
+Instrucțiunile și comenzile din panou rămân explicite în română.
+
+În 2026-10-20, extensia principală a primit numele afișat `Nori 46` și aceeași
+descriere neutră ca `Nori 47`. Nori 46 este downloaderul complet; Nori 47 este
+recuperarea selectivă. Folderele instalabile sunt `Downloads/nori46` și
+`Downloads/nori47`; panourile păstrează instrucțiunile funcționale în română.
+
+Nori 47 1.0.1 folosește aceleași match patterns ca Nori 46: codec MAIN pe
+comix.to, content script pe `<all_urls>`, panou numai după apariția readerului.
+Acest acces mai larg a fost cerut explicit în 2026-10-20.
+
+## Corecție codec curent, 2026-10-28
+
+- Nori 46 1.2.1 și Nori 47 1.0.2 suportă modulul `apicore-*` actual, care
+  înregistrează semnarea/decriptarea pe clientul Axios intern. `secure-*` actual
+  exportă stocare, nu vechiul installer `r`; fallback-ul vechi rămâne disponibil.
+- Bridge-ul descoperă clientul prin serviciul read-only al capitolului și o
+  interceptare sincronă temporară a dispatcherului Axios. Proba se oprește
+  înainte de interceptoare/rețea; descriptorul este restaurat în `finally`.
+  Handler-ele existente sunt apoi rulate pe configurația extensiei, iar GET-ul
+  este executat numai după validarea destinației și capitolului curent.
+- Test live capitol 170 Aristocrat (`7281875`): HTTP 200, x-enc: 2, sursa
+  Official / 9897, 20 pagini. Nu echivalează cu auditul complet 136–184.
+- `npm test`: 31 teste, inclusiv noul client, păstrarea headerelor/ordinii
+  interceptoarelor, restaurarea dispatcherului și refuzul navigării/scrierilor
+  sau destinațiilor străine.
+
+Test live suplimentar 2026-10-28: Aristocrat 184 (`11476574`), K Manga / 9599,
+HTTP 200, x-enc: 2, 19 pagini. Ambele capitole au metadata decodate prin bridge-ul
+actualizat; acest test nu descarcă și nu verifică toate imaginile.
+
+## Verificare Secret Saint, 2026-10-28
+
+Folderul `C:/Users/alexm/Documents/MANGA/SecretSaint` conține 41 capitole
+(10–45, inclusiv 21.1, 21.2, 21.3, 30.1, 40.1), 1.380 imagini. Toate au
+fost decodate complet; zero goluri, corupte, numere duplicate, duplicate interne
+sau imagini complet uniforme. Auditul live secvențial cu noul bridge a confirmat
+totalurile și dimensiunile tuturor celor 1.380 pagini din API, sursa Seven Seas
+Entertainment. Duplicate între capitole: pagini decorative inspectate vizual.
+Rapoarte ignorate în `output/secret-saint-audit/`. Capitolele 1–9 nu sunt în
+acest folder. Auditul nu a modificat imaginile și nu a generat EPUB-uri.
+
+## Instrumente portabile și colecții Secret Saint, 2026-10-28
+
+- `automation/audit_images.py`: audit local cu decodare completă, SHA-256,
+  goluri, capitole întregi absente în intervalul observat/cerut, duplicate,
+  pagini uniforme și comparație opțională cu rapoarte API (`--expected`).
+  Fără totaluri API nu afirmă că paginile de final sunt toate prezente.
+- `automation/audit-chapter-counts.cjs`: audit live parametrizat pentru orice
+  serie/interval comix.to, sursă blocată implicit, pauze secvențiale, profil
+  separat, raport parțial la erori; imaginile CDN sunt blocate în browserul
+  de audit. Cloudflare rămâne manual. Presetul `audit-aristocrat.cjs` primește
+  folderul sursă ca argument, fără o cale personală în cod.
+- `npm run build:extensions`: generează folderele/arhivele Nori 46 și Nori 47
+  din surse sub `output/extensions`. Arhivele ZIP sunt reproductibile și
+  conțin numai fișierele instalabile, nu teste, profiluri sau date manga.
+- `convert-to-epub/pack_collections.py` grupează capitole întregi în colecții
+  strict sub limita decimală MB (implicit 200.000.000 bytes), cu cache și
+  validarea arhivei, cuprinsului, spine-ului, ordinii și paginilor duble.
+  Instrucțiuni: `convert-to-epub/PACK_COLLECTIONS.md`.
+- Secret Saint a fost împachetat în 4 EPUB-uri pentru intervalele 10–20,
+  21–29 (inclusiv 21.1–21.3), 30–40 (inclusiv 30.1), 40.1–45. Dimensiuni:
+  199.303.897 / 197.859.844 / 196.738.074 / 86.997.116 bytes. 1.380 surse au
+  produs 1.417 pagini (37 duble despărțite dreapta-prima); toate au trecut
+  validatorul EPUB și verificările de ordine. Originalele au rămas intacte.
+  Rezultatele sunt locale: `Documents/MANGA/Kindle/Secret Saint`.
+- La momentul publicării instrumentelor, Aristocrat încă este în recuperare.
+  Nu declara completă seria pe baza testelor codec sau a raportului Secret Saint.

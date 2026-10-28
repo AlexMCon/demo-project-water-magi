@@ -100,3 +100,61 @@ test('isolated API client obtains and validates the current page bridge response
   assert.equal(listeners.size,0);
   await nextTurn();
 });
+
+function setupModern({foreignUrl=false, method='get', captureThrows=false, failDecode=false}={}) {
+  let receive,probeCount=0,adapterCalls=0;
+  const replies=[],calls=[];
+  const location={href:'https://comix.to/title/test/10044831-chapter-2',origin:'https://comix.to',pathname:'/title/test/10044831-chapter-2'};
+  const window={addEventListener:(type,fn)=>{receive=fn;},postMessage:data=>replies.push(data)};
+  class Headers {
+    constructor(value){Object.assign(this,value);}
+    static from(value){return new Headers(value);}
+    set(key,value){this[key]=value;}
+    toJSON(){return {...this};}
+  }
+  const order=[];
+  class Axios {
+    constructor(){this.defaults={baseURL:'/api/v1',headers:{common:{'X-Requested-With':'XMLHttpRequest'}}};this.interceptors={request:{handlers:[
+      {fulfilled:config=>{order.push('request-first');config.headers.set('X-Proof','proof');return config;}},
+      {fulfilled:config=>{order.push('sign');return {...config,params:{_:'modern.signed-token'}};}}
+    ]},response:{handlers:[
+      {fulfilled:response=>{order.push('response-first');assert.equal(response.headers['x-extra'],'present');assert.equal(response.config.method,'get');return response;}},
+      {fulfilled:response=>{order.push('decode');if(failDecode)throw Error('modern decode failed');return {...response,data:chapter};}}
+    ]}};}
+    async request(config){return await this.dispatch(config);}
+    dispatch(){adapterCalls++;throw Error('native adapter must never run');}
+  }
+  const original=Object.getOwnPropertyDescriptor(Axios.prototype,'dispatch');
+  const client=new Axios();function library(){}library.Axios=Axios;library.AxiosHeaders=Headers;
+  const service={async zQ(id){probeCount++;const config={url:foreignUrl?'https://other.example/api/v1/chapters/'+id:'/chapters/'+id,method};await client.request(config);if(captureThrows)throw Error('probe failed');},Ig(){throw Error('like must not be called');}};
+  const context=vm.createContext({window,location,URL,AbortController,setTimeout,clearTimeout,
+    performance:{getEntriesByType:()=>[{name:'https://other.example/apicore-untrusted.js'},{name:'https://comix.to/assets/apicore-current.js'},{name:secure}]},
+    __importSiteModule:async url=>url.includes('apicore-')?{changedAxiosExport:library,changedServiceExport:service}:{n:{},t:{}},
+    fetch:async(url,options)=>{calls.push({url,options});return{ok:true,status:200,headers:{entries:()=>[['x-enc','2'],['x-extra','present']][Symbol.iterator](),get:k=>k==='x-enc'?'2':null},json:async()=>({e:'new encrypted response'})};},
+  });
+  vm.runInContext(source.replace('import(url)','__importSiteModule(url)'),context);
+  return {send:async()=>receive({source:window,origin:location.origin,data:{channel,action:'load',requestId:'modern-1',chapterId:'10044831'}}),replies,calls,order,location,
+    stats:()=>({probeCount,adapterCalls,restored:Axios.prototype.dispatch===original.value}),client};
+}
+test('apicore discovers existing client without a probe network request, preserves headers and interceptor order',async()=>{
+  const app=setupModern();await app.send();
+  assert.deepEqual(app.stats(),{probeCount:1,adapterCalls:0,restored:true});
+  assert.equal(app.calls.length,1);assert.equal(new URL(app.calls[0].url).pathname,'/api/v1/chapters/10044831');
+  assert.equal(new URL(app.calls[0].url).searchParams.get('_'),'modern.signed-token');
+  assert.equal(app.calls[0].options.headers['X-Proof'],'proof');assert.equal(app.calls[0].options.headers['X-Requested-With'],'XMLHttpRequest');
+  assert.deepEqual(app.order,['sign','request-first','response-first','decode']);assert.deepEqual(app.replies[0].data,chapter);
+  await app.send();assert.equal(app.stats().probeCount,1);
+});
+test('apicore rejects foreign destinations and writes and restores dispatcher on failure',async()=>{
+  for(const config of [{foreignUrl:true},{method:'post'}]){
+    const app=setupModern(config);await app.send();assert.equal(app.calls.length,0);assert.equal(app.stats().adapterCalls,0);assert.equal(app.stats().restored,true);assert.match(app.replies[0].error,/neasteptata/);
+  }
+});
+test('apicore propagates decoder errors without returning encoded data as a chapter',async()=>{
+  const app=setupModern({failDecode:true});await app.send();assert.match(app.replies[0].error,/modern decode failed/);assert.equal(app.replies[0].data,undefined);assert.equal(app.stats().restored,true);
+});
+test('navigation during asynchronous signing prevents the chapter network request',async()=>{
+  const app=setupModern();app.client.interceptors.request.handlers[1].fulfilled=async config=>{
+    app.location.pathname='/title/test/999-chapter-3';return config;
+  };await app.send();assert.equal(app.calls.length,0);assert.match(app.replies[0].error,/s-a schimbat/);
+});

@@ -1,12 +1,21 @@
 {
   "name": "demo-project-water-magi",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Chrome chapter downloader, fixed-layout EPUB conversion, and repeatable codec analysis",
   "scripts": {
-    "test": "node --test extension/tests/chapter-api.test.cjs extension/tests/page-codec.test.cjs",
-    "browser": "node automation/browser-agent.cjs"
+    "test": "node --test extension/tests/chapter-api.test.cjs extension/tests/page-codec.test.cjs extension-repair/tests/repair-core.test.cjs automation/tests/audit-chapter-counts.test.cjs",
+    "browser": "node automation/browser-agent.cjs",
+    "build:repair": "node automation/build-repair-extension.cjs",
+    "test:repair-browser": "node extension-repair/tests/browser-smoke.cjs",
+    "build:extensions": "node automation/build-distributions.cjs",
+    "audit:chapters": "node automation/audit-chapter-counts.cjs",
+    "test:python": "python -m unittest discover -s automation/tests -p \"test_*.py\""
   },
-  "engines": { "node": ">=22" },
-  "devDependencies": { "playwright": "1.64.0" }
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
 }

@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Nori 47",
+  "version": "1.0.2",
+  "description": "Small everyday utilities.",
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://comix.to/*",
+        "*://*.comix.to/*"
+      ],
+      "js": [
+        "page-codec.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "chapter-api.js",
+        "repair-core.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "short_name": "Nori 47"
+}
